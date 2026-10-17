@@ -36,10 +36,24 @@ jobs:
       - name: Validate server.json
         run: ./mcp-publisher validate
 
+      # A manual run after a release would publish the same version again,
+      # which the registry refuses; skip it and leave the listing as it is.
+      - name: Check whether this version is already listed
+        id: listed
+        run: |
+          NAME=$(jq -r .name server.json); VERSION=$(jq -r .version server.json)
+          if curl -sf "https://registry.modelcontextprotocol.io/v0.1/servers/$(printf %s "$NAME" | jq -sRr @uri)/versions/$VERSION" >/dev/null; then
+            echo "already=true" >> "$GITHUB_OUTPUT"; echo "$NAME $VERSION is already listed; nothing to publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate to the MCP registry
+        if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher login github-oidc
 
       - name: Publish
+        if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher publish
 
   publish-branded:
@@ -67,10 +81,22 @@ jobs:
       - name: Validate
         run: ./mcp-publisher validate server.branded.json
 
+      - name: Check whether this version is already listed
+        id: listed
+        run: |
+          VERSION=$(jq -r .version server.branded.json)
+          if curl -sf "https://registry.modelcontextprotocol.io/v0.1/servers/one.commentify%2Fcommentify/versions/$VERSION" >/dev/null; then
+            echo "already=true" >> "$GITHUB_OUTPUT"; echo "one.commentify/commentify $VERSION is already listed; nothing to publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate with the commentify.one DNS record
+        if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
         env:
           MCP_REGISTRY_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_KEY }}
 
       - name: Publish
+        if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher publish server.branded.json

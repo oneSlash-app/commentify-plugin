@@ -37,3 +37,7 @@ The plugin sends your questions, the file paths and ticket keys you mention, and
 | `feedback-for-code` | Working on UI files, a component or a ticket that designers commented on |
 | `reply-to-feedback` | Answering a thread in your name (Pro) |
 | `close-feedback-threads` | Marking handled threads done (Pro) |
+
+## Publishing
+
+The server is listed in the [MCP registry](https://registry.modelcontextprotocol.io) from `server.json`. A version tag publishes it: `git tag v1.2.0 && git push origin v1.2.0` runs the workflow in `.github/workflows`, which signs in with this repository's GitHub identity and needs no secret.

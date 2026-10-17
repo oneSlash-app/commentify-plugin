@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.oneslash-app/commentify",
+  "title": "Commentify",
+  "description": "Your team's design feedback from Figma, Jira and Notion: ask, search, read, reply, mark done.",
+  "version": "1.1.0",
+  "websiteUrl": "https://app.commentify.one/docs/agents",
+  "repository": {
+    "url": "https://github.com/oneSlash-app/commentify-plugin",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://app.commentify.one/api/mcp"
+    }
+  ]
+}

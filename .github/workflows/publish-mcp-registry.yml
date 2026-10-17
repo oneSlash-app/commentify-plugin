@@ -1,6 +1,11 @@
 # Publishes server.json to the official MCP registry under io.github.oneSlash-app,
 # authenticated with this repository's GitHub OIDC token: no secret to keep.
 # Runs on a version tag (v1.2.0 sets version 1.2.0) or by hand.
+#
+# The second job publishes the same server under the branded namespace
+# one.commentify. It runs only once the repository secret MCP_REGISTRY_DNS_KEY
+# holds the hex private key whose public key is in commentify.one's TXT record
+# (see README, Publishing).
 name: Publish to MCP Registry
 
 on:
@@ -36,3 +41,36 @@ jobs:
 
       - name: Publish
         run: ./mcp-publisher publish
+
+  publish-branded:
+    runs-on: ubuntu-latest
+    if: ${{ vars.MCP_BRANDED_NAMESPACE == 'true' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Set version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          jq --arg v "$VERSION" '.version = $v' server.json > server.tmp && mv server.tmp server.json
+
+      - name: Rename to the branded namespace
+        run: jq '.name = "one.commentify/commentify"' server.json > server.branded.json
+
+      - name: Validate
+        run: ./mcp-publisher validate server.branded.json
+
+      - name: Authenticate with the commentify.one DNS record
+        run: ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
+        env:
+          MCP_REGISTRY_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_KEY }}
+
+      - name: Publish
+        run: ./mcp-publisher publish server.branded.json

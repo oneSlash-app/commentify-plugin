@@ -40,4 +40,22 @@ The plugin sends your questions, the file paths and ticket keys you mention, and
 
 ## Publishing
 
-The server is listed in the [MCP registry](https://registry.modelcontextprotocol.io) from `server.json`. A version tag publishes it: `git tag v1.2.0 && git push origin v1.2.0` runs the workflow in `.github/workflows`, which signs in with this repository's GitHub identity and needs no secret.
+The server is listed in the [MCP registry](https://registry.modelcontextprotocol.io) from `server.json` as `io.github.oneSlash-app/commentify`. A version tag publishes it: `git tag v1.2.0 && git push origin v1.2.0` runs the workflow in `.github/workflows`, which signs in with this repository's GitHub identity and needs no secret. The workflow can also be run by hand from the Actions tab.
+
+### Branded namespace (optional)
+
+The same workflow can publish the server as `one.commentify/commentify` once commentify.one proves ownership to the registry. Three steps, done once, on your own machine:
+
+1. Make a key pair and keep the private key safe:
+
+   ```
+   openssl genpkey -algorithm Ed25519 -out mcp-registry.pem
+   openssl pkey -in mcp-registry.pem -pubout -outform DER | tail -c 32 | base64
+   openssl pkey -in mcp-registry.pem -outform DER | tail -c 32 | xxd -p -c 64
+   ```
+
+   The second command prints the public key for DNS; the third prints the private key as hex for the secret.
+2. Add a TXT record on `commentify.one` (the root, not `app.`) with the value `v=MCPv1; k=ed25519; p=<public key>`.
+3. In this repository's settings, add the secret `MCP_REGISTRY_DNS_KEY` with the hex private key, and the variable `MCP_BRANDED_NAMESPACE` set to `true`. The next tag or manual run publishes both names.
+
+Once the branded name is live, retire the GitHub one so catalogs show the server once: `mcp-publisher login github` on your machine, then `mcp-publisher status --status deprecated --all-versions io.github.oneSlash-app/commentify`.

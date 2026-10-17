@@ -1,4 +1,4 @@
-# Publishes server.json to the official MCP registry under io.github.oneslash-app,
+# Publishes server.json to the official MCP registry under io.github.oneSlash-app,
 # authenticated with this repository's GitHub OIDC token: no secret to keep.
 # Runs on a version tag (v1.2.0 sets version 1.2.0) or by hand.
 name: Publish to MCP Registry

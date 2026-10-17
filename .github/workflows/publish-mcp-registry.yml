@@ -59,7 +59,9 @@ jobs:
   publish-branded:
     runs-on: ubuntu-latest
     if: ${{ vars.MCP_BRANDED_NAMESPACE == 'true' }}
+    needs: publish
     permissions:
+      id-token: write
       contents: read
     steps:
       - name: Checkout
@@ -91,6 +93,15 @@ jobs:
             echo "already=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # The registry allows one server per remote URL. The GitHub-namespace
+      # entry held app.commentify.one first, so it is retired before the
+      # branded name takes the URL: deprecated if that frees it, else deleted.
+      - name: Retire the GitHub-namespace entry
+        if: steps.listed.outputs.already == 'false'
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher status --status deprecated --all-versions --message "Listed as one.commentify/commentify now" io.github.oneSlash-app/commentify || true
+
       - name: Authenticate with the commentify.one DNS record
         if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
@@ -99,4 +110,16 @@ jobs:
 
       - name: Publish
         if: steps.listed.outputs.already == 'false'
-        run: ./mcp-publisher publish server.branded.json
+        id: publish
+        run: ./mcp-publisher publish server.branded.json 2>&1 | tee publish.log; test "${PIPESTATUS[0]}" -eq 0 || echo "failed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Delete the GitHub-namespace entry and publish again
+        if: steps.listed.outputs.already == 'false' && steps.publish.outputs.failed == 'true'
+        run: |
+          grep -q "already used by server io.github.oneSlash-app/commentify" publish.log
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher status --status deleted --all-versions --message "Replaced by one.commentify/commentify" io.github.oneSlash-app/commentify
+          ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
+          ./mcp-publisher publish server.branded.json
+        env:
+          MCP_REGISTRY_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_KEY }}

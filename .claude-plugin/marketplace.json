@@ -1,0 +1,24 @@
+{
+  "name": "commentify",
+  "description": "Commentify for Claude: your team's design feedback from Figma, Jira and Notion.",
+  "owner": {
+    "name": "oneSlash",
+    "url": "https://commentify.one"
+  },
+  "plugins": [
+    {
+      "name": "commentify",
+      "source": "./",
+      "description": "Ask what the team said about a feature, check feedback before changing code, and reply or close threads in your name.",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "figma",
+        "jira",
+        "notion",
+        "design",
+        "feedback"
+      ]
+    }
+  ]
+}

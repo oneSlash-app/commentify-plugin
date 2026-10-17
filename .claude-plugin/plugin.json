@@ -1,0 +1,23 @@
+{
+  "name": "commentify",
+  "displayName": "Commentify",
+  "version": "1.0.0",
+  "description": "Your team's design feedback from Figma, Jira and Notion, in Claude. Ask what the team said, find the threads behind a feature or a file you're working on, and reply or close threads in your name.",
+  "author": {
+    "name": "oneSlash",
+    "url": "https://commentify.one"
+  },
+  "homepage": "https://app.commentify.one/docs/agents",
+  "repository": "https://github.com/oneSlash-app/commentify-plugin",
+  "license": "MIT",
+  "keywords": [
+    "figma",
+    "jira",
+    "notion",
+    "design",
+    "feedback",
+    "comments",
+    "ux",
+    "product-design"
+  ]
+}

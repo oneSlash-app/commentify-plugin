@@ -1,11 +1,7 @@
-# Publishes server.json to the official MCP registry under io.github.oneSlash-app,
-# authenticated with this repository's GitHub OIDC token: no secret to keep.
+# Publishes server.json to the official MCP registry as one.commentify/commentify.
+# Ownership of commentify.one is proven by its DNS TXT record and the private
+# key in the repository secret MCP_REGISTRY_DNS_KEY (README, Publishing).
 # Runs on a version tag (v1.2.0 sets version 1.2.0) or by hand.
-#
-# The second job publishes the same server under the branded namespace
-# one.commentify. It runs only once the repository secret MCP_REGISTRY_DNS_KEY
-# holds the hex private key whose public key is in commentify.one's TXT record
-# (see README, Publishing).
 name: Publish to MCP Registry
 
 on:
@@ -17,7 +13,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
     steps:
       - name: Checkout
@@ -41,61 +36,13 @@ jobs:
       - name: Check whether this version is already listed
         id: listed
         run: |
-          NAME=$(jq -r .name server.json); VERSION=$(jq -r .version server.json)
-          if curl -sf "https://registry.modelcontextprotocol.io/v0.1/servers/$(printf %s "$NAME" | jq -sRr @uri)/versions/$VERSION" >/dev/null; then
-            echo "already=true" >> "$GITHUB_OUTPUT"; echo "$NAME $VERSION is already listed; nothing to publish."
-          else
-            echo "already=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Authenticate to the MCP registry
-        if: steps.listed.outputs.already == 'false'
-        run: ./mcp-publisher login github-oidc
-
-      - name: Publish
-        if: steps.listed.outputs.already == 'false'
-        run: ./mcp-publisher publish
-
-  publish-branded:
-    runs-on: ubuntu-latest
-    if: ${{ vars.MCP_BRANDED_NAMESPACE == 'true' }}
-    needs: publish
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install mcp-publisher
-        run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-
-      - name: Set version from the tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          jq --arg v "$VERSION" '.version = $v' server.json > server.tmp && mv server.tmp server.json
-
-      - name: Rename to the branded namespace
-        run: jq '.name = "one.commentify/commentify"' server.json > server.branded.json
-
-      - name: Validate
-        run: ./mcp-publisher validate server.branded.json
-
-      - name: Check whether this version is already listed
-        id: listed
-        run: |
-          VERSION=$(jq -r .version server.branded.json)
+          VERSION=$(jq -r .version server.json)
           if curl -sf "https://registry.modelcontextprotocol.io/v0.1/servers/one.commentify%2Fcommentify/versions/$VERSION" >/dev/null; then
             echo "already=true" >> "$GITHUB_OUTPUT"; echo "one.commentify/commentify $VERSION is already listed; nothing to publish."
           else
             echo "already=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # The registry allows one server per remote URL. The GitHub-namespace
-      # entry held app.commentify.one first, so it is retired before the
-      # branded name takes the URL: deprecated if that frees it, else deleted.
       - name: Authenticate with the commentify.one DNS record
         if: steps.listed.outputs.already == 'false'
         run: ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
@@ -104,18 +51,4 @@ jobs:
 
       - name: Publish
         if: steps.listed.outputs.already == 'false'
-        id: publish
-        run: ./mcp-publisher publish server.branded.json 2>&1 | tee publish.log; test "${PIPESTATUS[0]}" -eq 0 || echo "failed=true" >> "$GITHUB_OUTPUT"
-
-      # Deprecating the old entry does not free its URL; only deleting does.
-      # The status command asks for confirmation, which `yes` answers.
-      - name: Delete the GitHub-namespace entry and publish again
-        if: steps.listed.outputs.already == 'false' && steps.publish.outputs.failed == 'true'
-        run: |
-          grep -q "already used by server io.github.oneSlash-app/commentify" publish.log
-          ./mcp-publisher login github-oidc
-          yes | ./mcp-publisher status --status deleted --all-versions --message "Replaced by one.commentify/commentify" io.github.oneSlash-app/commentify
-          ./mcp-publisher login dns --domain commentify.one --private-key "$MCP_REGISTRY_DNS_KEY"
-          ./mcp-publisher publish server.branded.json
-        env:
-          MCP_REGISTRY_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_KEY }}
+        run: ./mcp-publisher publish

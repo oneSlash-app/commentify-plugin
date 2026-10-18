@@ -9,6 +9,7 @@
   },
   "homepage": "https://app.commentify.one/docs/agents",
   "repository": "https://github.com/oneSlash-app/commentify-plugin",
+  "privacyPolicyUrl": "https://commentify.one/privacy-policy",
   "license": "MIT",
   "keywords": [
     "figma",

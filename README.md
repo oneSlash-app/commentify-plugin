@@ -38,8 +38,6 @@ The plugin sends your questions, the file paths and ticket keys you mention, and
 | `reply-to-feedback` | Answering a thread in your name (Pro) |
 | `close-feedback-threads` | Marking handled threads done (Pro) |
 
-## Publishing
+## MCP registry
 
-The server is listed in the [MCP registry](https://registry.modelcontextprotocol.io) as `one.commentify/commentify`, from `server.json`. A version tag publishes a new version: `git tag v1.2.0 && git push origin v1.2.0` runs the workflow in `.github/workflows`, which proves ownership of commentify.one with its DNS TXT record and the private key held in the repository secret `MCP_REGISTRY_DNS_KEY`. The workflow can also be run by hand from the Actions tab; it skips a version that is already listed.
-
-If the key is ever lost, make a new pair, put the new public key in the TXT record on commentify.one (`v=MCPv1; k=ed25519; p=<public key>`), and replace the secret.
+The server is listed in the [MCP registry](https://registry.modelcontextprotocol.io) as `one.commentify/commentify`, so any client that reads the registry can find it under the same name. The listing is maintained from Commentify's own repository, not from here.

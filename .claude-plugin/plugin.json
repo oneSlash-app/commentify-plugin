@@ -8,8 +8,11 @@
     "url": "https://commentify.one"
   },
   "homepage": "https://app.commentify.one/docs/agents",
+  "documentationUrl": "https://app.commentify.one/docs/agents",
+  "supportUrl": "https://app.commentify.one/docs/agents#support",
   "repository": "https://github.com/oneSlash-app/commentify-plugin",
   "privacyPolicyUrl": "https://commentify.one/privacy-policy",
+  "termsOfServiceUrl": "https://commentify.one/terms-of-service",
   "license": "MIT",
   "keywords": [
     "figma",
